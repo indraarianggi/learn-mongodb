@@ -417,5 +417,170 @@ Lebih detail lihat [Tutorial Points](https://www.tutorialspoint.com/mongodb/mong
 
 
 ---
+## Deployment
+Lebih detail lihat [Tutorials Point](https://www.tutorialspoint.com/mongodb/mongodb_deployment.htm).
 
+---
+## Relationships
+Relasi di MongoDB mewakili bagaimana berbagai dokumen saling terkait secara logis.
+
+Sebuha relasi bisa berupa 1:1, 1:N, N:1, atau N:N.
+
+Relasi dalam MongoDB bisa dibuat dengan pendekatan Embedded (tertanam) atau Referenced (referensi).
+
+Contoh, user bisa memiliki _lebih dari_ satu alamat, maka hubungan antara tabel **user** dan **alamat** adalah **1:N**.
+
+Document user:
+> {
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"_id":ObjectId("52ffc33cd85242f436000001"),
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"name": "Tom Hanks",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"contact": "987654321",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"dob": "01-01-1991"
+>
+> }
+
+Document alamat:
+> {
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"_id":ObjectId("52ffc4a5d85242602e000000"),
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"building": "22 A, Indiana Apt",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"pincode": 123456,
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"city": "Los Angeles",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"state": "California"
+>
+> }
+
+Maka model data dalam MongoDB menjadi:
+
+### Dengan pendekatan embedded
+> {
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"_id":ObjectId("52ffc33cd85242f436000001"),
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"contact": "987654321",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"dob": "01-01-1991",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"name": "Tom Benzamin",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;**_"address": [_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_{_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"building": "22 A, Indiana Apt",_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"pincode": 123456,_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"city": "Los Angeles",_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"state": "California"_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_},_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_{_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"building": "170 A, Acropolis Apt",_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"pincode": 456789,_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"city": "Chicago",_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_"state": "Illinois"_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_}_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;**_]_**
+>
+> }
+
+Kelebihan dari model **embedded** adalah data mudah diambil. Namun kekurangannya, jika data yang ter-embed (_alamat_) semakin banyak/besar akan mempengaruhi operasi read/write.
+
+### Dengan pendekatan referenced
+> {
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"_id":ObjectId("52ffc33cd85242f436000001"),
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"contact": "987654321",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"dob": "01-01-1991",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;"name": "Tom Benzamin",
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;**_"address_ids": [_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_ObjectId("52ffc4a5d85242602e000000"),_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**_ObjectId("52ffc4a5d85242602e000001")_**
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;**_]_**
+>
+> }
+
+Menggunakan pendekatan **referenced** hanya **id** dari document alamat yang disimpan (_di-embed_) ke dalam document user.
+
+Sehingga nantinya untuk melihat alamat user memerlukan dua operasi:
+> var result = db.users.findOne({"name":"Tom Benzamin"},{"address_ids":1})
+>
+> var addresses = db.address.find({"_id":{"$in":result["address_ids"]}})
+
+
+---
+## Database References
+MongoDB menyediakan **DBRef** untuk melakukan referensi document. **DBRef** digunakan jika document yang ingin direfensikan memiliki banyak jenis.
+
+Berkaitan dengan pembahasan sebelumnya, misal document **alamat** memiliki banyak jenis, antaranya **alamat rumah**, **alamat kantor**, dan sebagainya.
+
+DBRef memiliki 3 field:
+- $ref => nama collection dari document referensi.
+- $id => id dari document referensi.
+- $db (opsional) => nama database dimana document referensi berada.
+
+
+---
+## Covered Queries
+Adalah query yang:
+- semua field kriteria dalam query adalah bagian dari index
+- semua field yang ingin ditampilkan adlah bagian dari index yang sama
+
+Akan mempercepat pencarian, karena pencarian hanya akan dilakukan pada index, tidak sampai melihat ke dalam document.
+
+
+---
+## Analizing Query
+Untuk mengetahui seberapa efektif desain database dan index yang dibuat.
+
+Menggunakan method **explain()** dan **hint()**.
+
+
+---
+### _Mencari_ Sekaligus _Update_ Document
+Menggunakan method **findAndModiry()**:
+> **_db.item.findAndModify( {_**
+> &nbsp;&nbsp;&nbsp;&nbsp;**_query:{name: "Nikon FM2", stock:{$gt:0}},_**
+> &nbsp;&nbsp;&nbsp;&nbsp;**_update: { $inc: {stock:-1} }_**
+> **_} )_**
+
+Lebih detail lihat [Tutorials Point](https://www.tutorialspoint.com/mongodb/mongodb_atomic_operations.htm).
+
+
+---
+## Advance Indexing
+### Indexing Array Fields
+Membuat index pada array, secara otomatis akan membuat index-index terpisah untuk masing-masing nilai dalam array.
+
+### Indexing Sub-Document Fields
+Membuat index untuk field sub-document, dengan cara membuat index berdasarkan field-field yang ada dalam sub-document tersebut.
+
+Pada saat melakukan query berdasarkan nilai sub-document, PERHATIKAN urutan field dalam sub-document tersebut. Urutan pencarian dalam fungsi query harus sama dengan urutan field dalam sub-document.
+
+
+---
 
