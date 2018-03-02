@@ -583,4 +583,21 @@ Pada saat melakukan query berdasarkan nilai sub-document, PERHATIKAN urutan fiel
 
 
 ---
+## Regular Expression
+MongoDB menyediakan fungsionalitas dari regular expression untuk pencocokan string menggunakan operator **$regex**.
+> db.item.find( _{ name: **{$regex:"Minolta"}** }_ )
+
+### Regular expression dengan case insensitive
+Mencari dengan regular expression secara insensitive, menggunakan parameter **$options** dengan nilai **$i**.
+> db.item.find({name: {$regex:"_capios_", **_$options:"$i"_** }})
+
+
+## GridFS
+GridFS adalah spesifikasi MongoDB untuk menyimpan file besar seperti gambar, audio, video, dan sebagainya. GridFS mempunyai kemampuan untuk menyimpan file, bahkan yang lebih besar dari batas ukuran document 16MB.
+
+GridFS membagi sebuah file ke dalam potongan-potongan dan menyimpan setiap potongan data ke dalam document yang terpisah.
+
+GridFS secara default menggunakan dua collection, **fs.files** dan **fs.chunks**, untuk menyimpan metadata file dan potongan-potongan data.
+
+Untuk menambahkan file ke dalam GridFS, lihat [Tutotials Point](https://www.tutorialspoint.com/mongodb/mongodb_gridfs.htm).
 
