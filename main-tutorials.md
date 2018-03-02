@@ -601,3 +601,48 @@ GridFS secara default menggunakan dua collection, **fs.files** dan **fs.chunks**
 
 Untuk menambahkan file ke dalam GridFS, lihat [Tutotials Point](https://www.tutorialspoint.com/mongodb/mongodb_gridfs.htm).
 
+
+## Auto Increment dalam MongoDB
+Tidak seperti SQL database, MongoDB tidak memiliki fungsionalitas **auto-increment**. Secara default MongoDB telah menyediakan field **_id** dengan nilai unik untuk setiap document.
+
+Namun, jika ingin menggunakan auto-increment, dapat dilakukan dengan menggunakan **_counter_**. Cara pembuatan fungsionalitas auto-increment sebagai berikut:
+
+### Menggunakan Collection Counter
+Collection counter dimaksudkan untuk menyimpan nilai _id terakhir yang digunakan untuk menyimpan suatu data. Dengan begitu untuk memberi _id ke data berikutnya yang ditambahkan, melihat dari collection counter tersebut terlebih dahulu.
+
+Membuat collection **counters**:
+> db.createCollection(**_"counters"_**)
+
+Insert sebauh document dengan filed _id **userid** dan field value **0**. Document ini dimaksudkan untuk menyimpan nilai _id terakhir untuk data user.
+> db.counters.insert( **_{_id: "userid", value: 0}_** )
+
+### Membuat Fungsi JavaScript
+Fungsi JavaScript digunakan untuk meningkatkan nilai field **value** pada document **userid** dalam collection **counters**, dan mengembalikan nilai field **value** terakhir.
+> function getNextIdValue(sequenceName) { 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;var sequenceDocument = db.counters.findAndModify({ 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query: {_id: sequenceName}, 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;update: {$inc:{sequence_value:1}}, 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new: true 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;}); 
+>       
+> &nbsp;&nbsp;&nbsp;&nbsp;return sequenceDocument.sequence_value; 
+> 
+> }
+
+
+### Menggunakan Fungsi JavaScript untuk Menentukan Nilai ID
+> db.users.insert({ 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;**_id: getNextSequenceValue("productid"),**
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;user_name: "Indra Arianggi Suryaatmaja", 
+> 
+> &nbsp;&nbsp;&nbsp;&nbsp;address: "Depok" 
+> 
+> })
+
